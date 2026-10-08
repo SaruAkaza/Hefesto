@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Hefesto - Painel de Monitoramento de Impressoras">
+  <meta name="theme-color" content="#0c1017">
+  <title>Hefesto - Monitoramento de Impressoras</title>
+
+  <!-- Script Anti-FOUC para Tema Dark/Light -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  <!-- Tipografia: IBM Plex Sans & IBM Plex Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/printer-replacement.css?v=2.0-flat">
+  <link rel="stylesheet" href="css/printing-costs.css?v=1.3">
+  <link rel="stylesheet" href="css/workstations.css?v=0.1.0">
+  <!-- Estilos da Aplicação -->
+  <link rel="stylesheet" href="css/style.css?v=1.0.0">
+
+  <link rel="icon" type="image/svg+xml" href="hefesto.svg">
+</head>
+<body>
+
+  <!-- ====================================================================
+       PORTAL DE ACESSO
+       ==================================================================== -->
+  <div class="login-overlay active" id="login-overlay">
+    <div class="login-terminal-frame">
+      <div class="login-card">
+        <div class="login-brand-header">
+          <div class="brand-monogram">
+            <img src="hefesto.svg" alt="Logo Hefesto" class="brand-logo-source">
+          </div>
+          <div class="brand-title-group">
+            <h1 class="login-main-title" id="login-main-title">Hefesto</h1>
+            <p class="login-description" id="login-main-desc">Painel de Impressoras e Suprimentos</p>
+          </div>
+        </div>
+
+        <!-- Seleção de Perfil de Acesso -->
+        <div class="login-mode-dock">
+          <button type="button" class="mode-dock-btn active" id="tab-login-operator" data-mode="operator" aria-pressed="true">
+            <div class="dock-btn-icon"><svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="dock-btn-text">
+              <strong>Visualizar filial</strong>
+              <small>Consulta local</small>
+            </div>
+          </button>
+
+          <button type="button" class="mode-dock-btn" id="tab-login-admin" data-mode="admin" aria-pressed="false">
+            <div class="dock-btn-icon"><svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="dock-btn-text">
+              <strong>Administrador de TI</strong>
+              <small>Gestão completa</small>
+            </div>
+          </button>
+        </div>
+
+        <!-- Formulário 1: Operador de Filial -->
+        <form id="form-login-unit" class="login-form-module">
+          <div class="login-unit-control-group">
+            <div class="login-section-header">
+              <label for="login-unit-search-input" class="login-field-label">Selecione a sua unidade</label>
+            </div>
+
+            <!-- Seletor de Estado na Tela de Login -->
+            <div class="login-region-pills" id="login-region-pills" role="radiogroup" aria-label="Filtrar filiais por estado">
+              <button type="button" class="login-region-pill active" data-region="all">Todos</button>
+              <button type="button" class="login-region-pill" data-region="RJ">Rio de Janeiro (RJ)</button>
+              <button type="button" class="login-region-pill" data-region="SP">São Paulo (SP)</button>
+            </div>
+
+            <div class="login-search-box">
+              <svg class="search-box-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="login-unit-search-input" class="login-search-input" placeholder="Pesquisar por nome ou código..." autocomplete="off">
+              <button type="button" id="btn-clear-login-unit-search" class="login-search-clear-btn" style="display: none;" title="Limpar busca" aria-label="Limpar busca">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="login-select-wrapper">
+              <svg class="login-select-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <select id="login-unit-select" class="login-select" required>
+                <option value="">Carregando filiais...</option>
+              </select>
+            </div>
+            <div class="login-hint-text" id="login-unit-hint">Exibição restrita aos equipamentos da filial selecionada.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-login-submit">
+            <span>Acessar Filial</span>
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </form>
+
+        <!-- Formulário 2: Administrador -->
+        <form id="form-login-admin" class="login-form-module" style="display: none;" autocomplete="off">
+          <div class="form-group cyber-field">
+            <label for="admin-user-input" class="form-label cyber-label">
+              <span>Usuário</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="form-input-wrapper cyber-input-wrapper">
+              <svg class="form-input-icon cyber-input-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="admin-user-input" class="form-input cyber-input" required placeholder="Digite seu usuário de rede" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label for="admin-password-input" class="form-label cyber-label">
+              <span>Senha</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="form-input-wrapper cyber-input-wrapper">
+              <svg class="form-input-icon cyber-input-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="admin-password-input" class="form-input cyber-input" required placeholder="Digite sua senha" autocomplete="new-password">
+            </div>
+            <div class="form-hint cyber-hint">Acesso completo ao inventário, configurações e diagnósticos de rede.</div>
+          </div>
+
+          <label class="login-remember">
+            <input type="checkbox" id="admin-remember-input" checked>
+            <span>Manter conectado neste computador</span>
+          </label>
+
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-admin-submit">
+            <span>Entrar como Administrador</span>
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </form>
+
+        <!-- Footer do Portal -->
+        <div class="login-terminal-footer">
+          <span>Compatível com impressoras Epson, Brother, Lexmark, Xerox e HP</span>
+          <span class="login-version" id="login-system-tag">Hefesto v1.0.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       ESTRUTURA PRINCIPAL: PAINEL DE IMPRESSORAS E SUPRIMENTOS
+       ==================================================================== -->
+  <div class="app-container" id="main-app-container">
+
+    <!-- 1. CABEÇALHO PRINCIPAL -->
+    <header class="command-deck-header">
+      <div class="deck-brand-block">
+        <div class="deck-logo-emblem">
+          <img src="hefesto.svg" alt="Logo Hefesto" class="deck-logo-img">
+        </div>
+
+        <div class="deck-brand-details">
+          <div class="deck-title-row">
+            <span class="deck-brand-name" id="header-brand-title">HEFESTO</span>
+            <span class="deck-context" id="current-unit-badge">Carregando...</span>
+            <span class="deck-role admin-role-badge" id="admin-role-badge" style="display: none;">Administração</span>
+            <div class="deck-edge-capsule" id="edge-mode-badge" style="display: none;" title="Instância local da filial">
+              <span class="edge-dot"></span>
+              <span id="edge-mode-badge-text">FILIAL LOCAL</span>
+            </div>
+            <div class="deck-hub-sync-status" id="edge-hub-sync-indicator" style="display: none;" title="Status de sincronização">
+              <span class="hub-sync-dot"></span>
+              <span id="edge-hub-sync-text">Sincronizado</span>
+              <button type="button" class="btn-sync-now" id="btn-force-edge-sync" title="Forçar sincronização com o servidor central" aria-label="Forçar sincronização com o servidor central">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="deck-subtitle" id="header-unit-desc">Monitoramento e Gestão de Suprimentos</div>
+        </div>
+      </div>
+
+      <div class="deck-action-hub">
+        <button type="button" class="btn btn-ghost btn-refresh" id="btn-refresh-all" title="Atualizar dados de todas as impressoras (Atalho: R)">
+          <svg class="icon icon-xs" id="refresh-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          <span id="btn-refresh-text">Sincronizar</span>
+        </button>
+
+        <!-- Ferramentas administrativas agrupadas -->
+        <div class="menu admin-only" id="tools-menu-container" style="display: none;">
+          <button type="button" class="btn btn-secondary menu-toggle" id="btn-tools-menu-toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="tools-menu" title="Ferramentas de administração">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span>Ferramentas</span>
+            <svg class="icon icon-xs menu-caret" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="menu-list" id="tools-menu" role="menu" aria-label="Ferramentas">
+            <button type="button" class="menu-item" role="menuitem" id="btn-open-diagnose-ip" title="Testar conexão por IP">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span>Testar IP</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-open-mac-scanner" title="Localizar impressoras por MAC ou Série na rede">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+              <span>Localizar na Rede</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-manage-units-header" title="Gerenciar filiais cadastradas">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+              <span>Filiais</span>
+            </button>
+            <button type="button" class="menu-item admin-only" role="menuitem" id="btn-printing-costs" style="display: none;" title="Calcular custos de páginas e aluguel por equipamento, setor e unidade">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M14 10h2M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>
+              <span>Custos de impressão</span>
+            </button>
+            <button type="button" class="menu-item admin-only" role="menuitem" id="btn-workstations" style="display: none;" title="Computadores, impressoras USB e registros de impressão">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span>Instalar coletor Windows</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-asset-history" title="Histórico de substituições de equipamentos">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 14"/></svg>
+              <span>Histórico de Equipamentos</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-import-sheet-header" title="Importar planilha de impressoras (Excel ou CSV)">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              <span>Importar Planilha</span>
+            </button>
+
+            <div class="menu-sep" role="separator"></div>
+            <div class="menu-label" role="presentation">Exportar CSV</div>
+            <button type="button" class="menu-item" role="menuitem" id="btn-export-recharges-csv-header" title="Exportar histórico de trocas de insumos">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <span>Histórico de Trocas</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-export-integration-csv-header" title="Exportar histórico e auditoria">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <span>Auditoria do Parque</span>
+            </button>
+            <button type="button" class="menu-item" role="menuitem" id="btn-export-ink-csv-header" title="Exportar relatório consolidado de suprimentos">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <span>Relatório de Suprimentos</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary admin-only" id="btn-add-printer-header" style="display: none;" title="Cadastrar nova impressora">
+          <svg class="icon icon-xs" viewBox="0 0 24 24"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          <span>Nova impressora</span>
+        </button>
+
+        <button type="button" class="deck-icon-btn" id="btn-theme-toggle" title="Alternar modo claro / escuro" aria-label="Alternar modo claro / escuro">
+          <svg class="icon icon-sm" id="theme-icon-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg class="icon icon-sm" id="theme-icon-sun" viewBox="0 0 24 24" style="display: none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+
+        <button type="button" class="deck-icon-btn exit-btn" id="btn-logout" title="Sair do sistema" aria-label="Sair do sistema">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. CONSOLE PRINCIPAL -->
+    <main class="mission-control-main">
+
+      <!-- STATUS OPERACIONAL DO PARQUE -->
+      <section class="telemetry-radar-section">
+        <!-- ABAS MESTRAS + FILTRO DE FILIAL -->
+        <div class="overview-toolbar">
+          <div class="master-navigation-dock" id="admin-main-tabs">
+            <button type="button" class="master-tab-trigger active" id="btn-tab-printers" data-tab="printers">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Inventário de Equipamentos</span>
+            </button>
+
+            <button type="button" class="master-tab-trigger" id="btn-tab-forecast" data-tab="forecast">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <span>Previsão de Suprimentos</span>
+            </button>
+
+
+          </div>
+
+          <div class="overview-toolbar-end">
+            <!-- Seletor Rápido de Estado e Unidade (Administrador) -->
+            <div class="admin-unit-filter-slot admin-only" id="overview-unit-selector-box" style="display: none;">
+              <div class="region-pill-group" id="overview-region-pills" role="radiogroup" aria-label="Filtrar por Região">
+                <button type="button" class="region-pill active" data-region="all">Todos</button>
+                <button type="button" class="region-pill" data-region="RJ">RJ</button>
+                <button type="button" class="region-pill" data-region="SP">SP</button>
+              </div>
+              <select class="form-select-compact cyber-select-compact" id="overview-unit-filter" title="Filtrar por Unidade" aria-label="Filtrar por Unidade">
+                <option value="">Todas as Filiais</option>
+              </select>
+            </div>
+            <span class="last-updated" id="last-updated-text">Aguardando atualização...</span>
+          </div>
+        </div>
+
+        <!-- FAIXA DE STATUS (ordenada por gravidade; também filtra o inventário) -->
+        <div id="operational-status-cards-container">
+          <div class="status-strip" role="group" aria-label="Filtrar equipamentos por situação">
+            <button type="button" class="status-strip-item offline" data-action="filter-overview" data-filter="offline" aria-pressed="false" title="Ver impressoras sem comunicação de rede">
+              <span class="status-strip-value" id="count-offline">0</span>
+              <span class="status-strip-label"><span class="status-dot"></span>Sem comunicação</span>
+            </button>
+            <button type="button" class="status-strip-item critical" data-action="filter-overview" data-filter="critical" aria-pressed="false" title="Ver impressoras com nível crítico de suprimento">
+              <span class="status-strip-value" id="count-critical">0</span>
+              <span class="status-strip-label"><span class="status-dot"></span>Crítico</span>
+            </button>
+            <button type="button" class="status-strip-item warning" data-action="filter-overview" data-filter="warning" aria-pressed="false" title="Ver equipamentos em atenção">
+              <span class="status-strip-value" id="count-warning">0</span>
+              <span class="status-strip-label"><span class="status-dot"></span>Atenção</span>
+            </button>
+            <button type="button" class="status-strip-item unconfigured" data-action="filter-overview" data-filter="unconfigured" aria-pressed="false" title="Ver equipamentos cadastrados sem IP">
+              <span class="status-strip-value" id="count-unconfigured">0</span>
+              <span class="status-strip-label"><span class="status-dot"></span>Sem IP</span>
+            </button>
+            <button type="button" class="status-strip-item online" data-action="filter-overview" data-filter="online" aria-pressed="false" title="Filtrar impressoras operacionais">
+              <span class="status-strip-value" id="count-connected-banner">0</span>
+              <span class="status-strip-label"><span class="status-dot"></span>Operacionais</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTÓRICO DE RECARGAS NA UNIDADE (OPERADOR) -->
+      <section class="unit-recent-recharges-section" id="unit-recent-recharges-section" style="display: none;">
+        <button type="button" class="unit-recharges-header-bar" id="toggle-unit-recharges-btn" aria-expanded="true" aria-controls="unit-recent-recharges-list">
+          <span class="unit-recharges-title-wrap">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="unit-recharges-title">Reposições e Detecções de Suprimentos na Filial</span>
+            <span class="recharge-badge-counter" id="unit-recharges-count-badge">0</span>
+          </span>
+          <span class="unit-recharges-toggle-text" id="btn-toggle-unit-recharges-text">Ocultar</span>
+        </button>
+        <div class="unit-recharges-list-body" id="unit-recent-recharges-list"></div>
+      </section>
+
+      <!-- ====================================================================
+           ABA 1: INVENTÁRIO DE IMPRESSORAS
+           ==================================================================== -->
+      <div id="tab-view-printers" class="admin-tab-view active">
+        <section class="fleet-panel fleet-matrix-panel">
+          <!-- Barra de Controle do Inventário -->
+          <div class="fleet-toolbar">
+            <h2 class="panel-title matrix-title">
+              <span>Inventário de Equipamentos</span>
+              <span class="panel-count" id="count-all">0</span>
+            </h2>
+
+            <div class="fleet-toolbar-controls">
+              <div class="search-box-wrap cyber-search-box">
+                <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="search-input" placeholder="Buscar por setor, modelo, IP, série..." aria-label="Buscar equipamentos" autocomplete="off">
+                <button type="button" class="search-clear-btn" id="search-clear-btn" style="display: none;" title="Limpar busca" aria-label="Limpar busca">
+                  <svg class="icon icon-xs" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+                </button>
+                <kbd class="keycap" id="search-keycap">/</kbd>
+              </div>
+
+              <select class="form-select-compact cyber-select-compact" id="filter-location-select" title="Filtrar por Setor" aria-label="Filtrar por Setor">
+                <option value="">Todos os Setores</option>
+              </select>
+
+              <select class="form-select-compact cyber-select-compact" id="sort-fleet-select" title="Ordenar lista" aria-label="Ordenar lista">
+                <option value="lowest-supply">Menor Suprimento Primeiro</option>
+                <option value="name-asc">Setor / Local (A-Z)</option>
+                <option value="ip-asc">Endereço IP</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Barra de Navegação por Andar -->
+          <div class="fleet-floor-nav" id="fleet-floor-nav" style="display: none;">
+            <!-- Injetado dinamicamente via JavaScript -->
+          </div>
+
+          <!-- Tabela de Equipamentos -->
+          <div class="data-table-wrapper telemetry-table-wrapper">
+            <table class="data-table telemetry-data-table fleet-table">
+              <thead>
+                <tr>
+                  <th>Local / Setor</th>
+                  <th>Modelo</th>
+                  <th>Endereço IP</th>
+                  <th>Nível de Suprimentos</th>
+                  <th class="th-end">Contador</th>
+                  <th>Status</th>
+                  <th class="th-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="my-printers-list-body">
+                <!-- Injetado dinamicamente via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ====================================================================
+           ABA 2: VOLUME & PREVISIBILIDADE (RUN-RATE)
+           ==================================================================== -->
+      <div id="tab-view-forecast" class="admin-tab-view" style="display: none;">
+
+        <!-- KPIs de Previsão -->
+        <div class="forecast-kpi-deck">
+          <div class="forecast-card">
+            <div class="forecast-card-body">
+              <div class="forecast-val" id="kpi-pages-today">0</div>
+              <div class="forecast-label">Páginas Hoje</div>
+              <span class="forecast-period-tag" id="kpi-period-today">Período: Hoje</span>
+              <div class="forecast-sub" id="kpi-sub-pages-today">Volume impresso hoje</div>
+            </div>
+          </div>
+
+          <div class="forecast-card">
+            <div class="forecast-card-body">
+              <div class="forecast-val" id="kpi-pages-week">0</div>
+              <div class="forecast-label">Páginas na Semana</div>
+              <span class="forecast-period-tag" id="kpi-period-week">Últimos 7 dias</span>
+              <div class="forecast-sub" id="kpi-sub-pages-week">Volume acumulado na semana</div>
+            </div>
+          </div>
+
+          <div class="forecast-card">
+            <div class="forecast-card-body">
+              <div class="forecast-val" id="kpi-pages-month">0</div>
+              <div class="forecast-label">Páginas no Mês</div>
+              <span class="forecast-period-tag" id="kpi-period-month">Últimos 30 dias</span>
+              <div class="forecast-sub" id="kpi-sub-pages-month">Volume acumulado no mês</div>
+            </div>
+          </div>
+
+          <div class="forecast-card danger">
+            <div class="forecast-card-body">
+              <div class="forecast-val" id="kpi-critical-swaps-count">0</div>
+              <div class="forecast-label">Trocas Iminentes (&lt; 7 dias)</div>
+              <span class="forecast-period-tag danger" id="kpi-period-swaps">Próximos 7 dias</span>
+              <div class="forecast-sub" id="kpi-sub-critical-swaps">Suprimentos abaixo do limite de segurança</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seção Analítica de Previsibilidade -->
+        <section class="fleet-panel fleet-matrix-panel forecast-panel">
+          <div class="panel-control-bar matrix-control-bar">
+            <div class="panel-title-block matrix-title-block">
+              <h2 class="panel-title matrix-title">Previsão de Consumo e Trocas</h2>
+              <p class="panel-subtitle matrix-subtitle">Estimativa de durabilidade dos insumos e projeção de reposição</p>
+            </div>
+
+            <div>
+              <button type="button" class="btn btn-secondary" id="btn-export-forecast-csv">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar Previsões (CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-search-toolbar matrix-search-toolbar">
+            <div class="search-box-wrap cyber-search-box">
+              <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="forecast-search-input" placeholder="Buscar no relatório de previsão..." autocomplete="off">
+            </div>
+
+            <div class="matrix-toolbar-actions">
+              <select class="form-select-compact cyber-select-compact admin-only" id="forecast-unit-select" title="Filtrar por Filial">
+                <option value="">Todas as Filiais</option>
+              </select>
+
+              <select class="form-select-compact cyber-select-compact" id="forecast-workload-select" title="Filtrar por Carga">
+                <option value="">Todas as Cargas</option>
+                <option value="high">Alta Carga / Sobrecarga</option>
+                <option value="ideal">Carga Ideal (Saudável)</option>
+                <option value="low">Subutilizada / Ociosa</option>
+              </select>
+
+              <select class="form-select-compact cyber-select-compact" id="forecast-time-filter" title="Filtrar por Janela de Troca">
+                <option value="">Todas as Janelas</option>
+                <option value="critical7">Troca em até 7 dias</option>
+                <option value="warning15">Troca em até 15 dias</option>
+                <option value="normal30">Troca em até 30 dias</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tabela de Volume -->
+          <div class="data-table-wrapper telemetry-table-wrapper">
+            <table class="data-table telemetry-data-table forecast-table" id="forecast-table">
+              <thead>
+                <tr>
+                  <th style="min-width: 200px;">Equipamento / Setor</th>
+                  <th style="text-align: center; width: 90px;">Hoje</th>
+                  <th style="text-align: center; width: 110px;">Semana (7d)</th>
+                  <th style="text-align: center; width: 110px;">Mês (30d)</th>
+                  <th style="text-align: center; width: 110px;" title="Média diária calculada sobre a janela móvel de 7 dias; em histórico parcial, usa os dias-calendário realmente cobertos.">Média/Dia (7d)</th>
+                  <th style="text-align: center; width: 150px;">Carga / Capacidade</th>
+                  <th style="min-width: 170px;">Suprimento Crítico</th>
+                  <th style="text-align: center; width: 120px;">Páginas Restantes</th>
+                  <th style="min-width: 150px;">Previsão da Troca</th>
+                  <th style="text-align: center; min-width: 120px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="forecast-table-body">
+                <!-- Preenchido via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+
+
+
+    </main>
+
+    <footer class="app-footer">
+      <span id="app-version-text">Hefesto v1.0.0</span>
+    </footer>
+
+  </div>
+
+  <!-- ====================================================================
+       MODAIS
+       ==================================================================== -->
+
+  <dialog class="release-notes-dialog" id="release-notes-dialog" aria-labelledby="release-notes-title">
+    <h2 id="release-notes-title"></h2>
+    <p id="release-notes-summary"></p>
+    <ul id="release-notes-list"></ul>
+    <div class="release-notes-actions"><button type="button" class="btn btn-primary" id="release-notes-confirm">Entendi</button></div>
+  </dialog>
+
+
+  <!-- MODAL: IMPORTAR LISTA DE RAMAIS -->
+
+
+  <!-- MODAL: CADASTRAR / EDITAR RAMAL -->
+
+
+  <!-- MODAL: PROPOSTAS DE DESCOBERTA -->
+
+
+  <!-- MODAL: TESTAR CONEXÃO POR IP -->
+  <div class="modal-backdrop" id="modal-test-ip" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width: 540px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--color-warning);"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Teste de Conexão por IP</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-test-ip" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-test-ip-modal">
+        <div class="modal-body">
+          <p class="modal-intro-text">
+            Digite o endereço IP do equipamento para verificar a comunicação de rede e leitura SNMP.
+          </p>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="input-test-ip">
+              <span>Endereço IP da impressora</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="form-input-wrapper cyber-input-wrapper">
+              <svg class="form-input-icon cyber-input-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              <input type="text" class="form-input cyber-input" id="input-test-ip" placeholder="Ex: 198.18.0.48 ou 198.18.1.100" required>
+            </div>
+          </div>
+
+          <div id="test-ip-result-box" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-test-ip">Fechar</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="button" class="deck-action-pill cta" id="btn-quick-add-from-test" style="display: none;">
+              <span>Cadastrar esta Impressora</span>
+            </button>
+            <button type="submit" class="btn btn-primary cyber-button primary" id="btn-submit-test-ip">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span>Testar IP</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LOCALIZAR POR MAC ADDRESS (SCANNER DE SUB-REDE) -->
+  <div class="modal-backdrop" id="modal-mac-scanner" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width: 650px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--color-brand);"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+          <span>Localizar Impressoras na Rede</span>
+        </h2>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-subnets-catalog" title="Configurar faixas de rede" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Faixas de Rede</span>
+          </button>
+          <button class="btn-close-modal" id="btn-close-modal-mac-scanner" aria-label="Fechar modal">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Painel Retrátil: Catálogo de Sub-redes Corporativas -->
+      <div id="mac-scanner-subnets-manager" style="display: none; background: var(--bg-hover); border-bottom: 1px solid var(--border-color); padding: 0.85rem 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24" style="color: var(--color-brand);"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Faixas de Rede Cadastradas
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-muted);" id="corporate-subnets-count">0 faixas</span>
+        </div>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.6rem 0;">
+          Faixas consultadas na busca global. Cadastre sub-redes de novas filiais para incluir na varredura.
+        </p>
+        <div id="form-add-corporate-subnet" style="display: grid; grid-template-columns: 120px 1fr auto; gap: 0.5rem; margin-bottom: 0.65rem;">
+          <input type="text" class="form-input cyber-input" id="input-new-subnet" placeholder="Ex: 198.18.2" style="padding: 0.35rem 0.5rem; font-size: 0.8rem;">
+          <input type="text" class="form-input cyber-input" id="input-new-subnet-desc" placeholder="Descrição (Ex: Prédio Santana)" style="padding: 0.35rem 0.5rem; font-size: 0.8rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-save-corporate-subnet" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; white-space: nowrap; font-weight: 600;">
+            + Salvar Faixa
+          </button>
+        </div>
+        <div id="corporate-subnets-list" style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 110px; overflow-y: auto;">
+          <!-- Tags de sub-redes renderizadas via JS -->
+        </div>
+      </div>
+
+      <form id="form-mac-scanner">
+        <div class="modal-body">
+          <p class="modal-intro-text">
+            Consulte uma impressora pelo IP ou localize por MAC ou número de série. Sem identificador, a busca percorre a faixa selecionada.
+          </p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group cyber-field">
+              <label class="form-label cyber-label" for="mac-scan-unit-select">Filial ou escopo de busca</label>
+              <select class="form-select cyber-select" id="mac-scan-unit-select">
+                <option value="global" selected>Todas as filiais (busca global)</option>
+              </select>
+            </div>
+            <div class="form-group cyber-field">
+              <label class="form-label cyber-label" for="mac-scan-subnet">
+                <span>Sub-rede (/24)</span>
+                <span class="required-indicator" id="mac-scan-subnet-required" style="display: none;">*</span>
+              </label>
+              <input type="text" class="form-input cyber-input" id="mac-scan-subnet" placeholder="Busca global em todas as faixas" disabled>
+            </div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="mac-scan-target-mac">IP, endereço MAC ou número de série (opcional)</label>
+            <input type="text" class="form-input cyber-input" id="mac-scan-target-mac" placeholder="Ex: 198.18.3.25, 02:00:00:00:00:01 ou DEMO0002">
+            <div class="form-hint cyber-hint">Com IP, consulta apenas esse endereço. MAC e série identificam o equipamento mesmo após mudança de IP. Trocas físicas preservam o histórico anterior.</div>
+          </div>
+
+          <div id="mac-scanner-progress" style="display: none; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; font-size: 0.8rem;">
+              <span id="mac-scanner-status-text" style="color: var(--text-secondary);">Varrendo endereços da sub-rede...</span>
+              <span id="mac-scanner-count-text" style="font-weight: 600; color: var(--color-brand);">Consultando 254 endereços...</span>
+            </div>
+            <div style="background: var(--bg-hover); height: 6px; border-radius: 3px; overflow: hidden;">
+              <div id="mac-scanner-bar" style="background: var(--color-brand); height: 100%; width: 100%;"></div>
+            </div>
+          </div>
+
+          <div id="mac-scanner-results" style="margin-top: 1rem; max-height: 280px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-mac-scanner">Fechar</button>
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-submit-mac-scan">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Localizar na Rede</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ATRIBUIR / VINCULAR IP À IMPRESSORA -->
+  <div class="modal-backdrop" id="modal-assign-ip" role="dialog" aria-modal="true" style="z-index: 2200;">
+    <div class="modal-dialog" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--color-brand);"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><line x1="2" x2="22" y1="12" y2="12"/></svg>
+          <span>Vincular IP à Impressora</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-assign-ip" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-assign-ip">
+        <div class="modal-body">
+          <p class="modal-intro-text">
+            Selecione a impressora cadastrada que receberá o endereço IP detectado.
+          </p>
+
+          <!-- Card resumo do dispositivo localizado -->
+          <div style="background: var(--bg-surface-light); border: 1px solid var(--border-card); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1rem;">
+            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+              Dispositivo localizado
+            </div>
+            <div style="font-size: 1.05rem; font-weight: 700; color: var(--color-primary-text); font-family: var(--font-mono);" id="assign-ip-display-ip">
+              IP: -
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 3px; font-family: var(--font-mono);">
+              MAC: <strong id="assign-ip-display-mac">-</strong>
+              <span id="assign-ip-display-serial-container"> • S/N: <strong id="assign-ip-display-serial">-</strong></span>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;" id="assign-ip-display-model">
+              Modelo: -
+            </div>
+          </div>
+
+          <input type="hidden" id="assign-ip-val" value="">
+          <input type="hidden" id="assign-mac-val" value="">
+          <input type="hidden" id="assign-serial-val" value="">
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="assign-target-printer-select">
+              <span>Impressora cadastrada</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <select class="form-select cyber-select" id="assign-target-printer-select" required>
+              <option value="">Selecione a impressora...</option>
+            </select>
+            <div class="form-hint cyber-hint">
+              Equipamentos com IP pendente aparecem no topo para facilitar a vinculação.
+            </div>
+          </div>
+
+          <div id="assign-ip-warning" style="display: none; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.78rem; color: var(--color-warning); margin-top: 0.5rem;">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-assign-ip">Cancelar</button>
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-submit-assign-ip">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>Vincular IP</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRAR / EDITAR IMPRESSORA -->
+  <div class="modal-backdrop" id="modal-printer-form" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span id="modal-form-title-text">Cadastrar Impressora</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-form" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="printer-form">
+        <input type="hidden" id="printer-form-id" value="">
+        <div class="modal-body">
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="printer-unit-select">
+              <span>Filial de destino</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <select class="form-select cyber-select" id="printer-unit-select" required style="flex: 1;">
+                <option value="">Selecione a filial...</option>
+              </select>
+              <button type="button" class="deck-action-pill" id="btn-quick-new-unit" title="Criar nova filial">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="printer-location">
+              <span>Local ou setor</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <input type="text" class="form-input cyber-input" id="printer-location" placeholder="Ex: Recepção, Oncologia, Triagem 2º Andar" required>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="printer-ip">
+              <span>Endereço IP</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <input type="text" class="form-input cyber-input" id="printer-ip" placeholder="Ex: 198.18.0.48 ou 198.18.1.100" required>
+            <button type="button" class="btn btn-secondary" id="btn-form-replace" style="display:none">Instalou outra impressora? Substituir equipamento</button>
+            <div class="form-hint cyber-hint">O equipamento precisa responder na porta SNMP 161 da rede corporativa.</div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label cyber-label" for="printer-mac" style="margin-bottom: 0;">Endereço MAC (físico)</label>
+              <button type="button" id="btn-detect-printer-mac" class="deck-action-pill" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;" title="Consultar endereço MAC diretamente da placa de rede">
+                <span>Consultar da Placa</span>
+              </button>
+            </div>
+            <input type="text" class="form-input cyber-input" id="printer-mac" placeholder="Ex: 02:00:00:00:00:01" style="margin-top: 0.35rem;">
+            <div class="form-hint cyber-hint">Identificador físico para rastrear a impressora caso o IP seja alterado via DHCP.</div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="printer-name">Número de série (opcional)</label>
+            <input type="text" class="form-input cyber-input" id="printer-name" placeholder="Ex: DEMO00000013">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group cyber-field">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="form-label cyber-label" for="printer-initial-page-count" style="margin-bottom: 0;">Contador inicial de páginas</label>
+                <button type="button" id="btn-sync-initial-live" class="deck-action-pill" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;" title="Copiar contador atual do equipamento">
+                  <span>Copiar do Equipamento</span>
+                </button>
+              </div>
+              <input type="number" class="form-input cyber-input" id="printer-initial-page-count" min="0" placeholder="Ex: 6780" style="margin-top: 0.35rem;">
+            </div>
+
+            <div class="form-group cyber-field">
+              <label class="form-label cyber-label" for="printer-activated-at">Início do monitoramento</label>
+              <input type="datetime-local" class="form-input cyber-input" id="printer-activated-at">
+            </div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="printer-installed-at">Data de instalação na filial</label>
+            <input type="date" class="form-input cyber-input" id="printer-installed-at">
+          </div>
+
+          <input type="hidden" id="printer-community" value="public">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-form">Cancelar</button>
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-submit-printer-form">Salvar Impressora</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GERENCIADOR DE PASTAS -->
+  <div class="modal-backdrop" id="modal-manage-units" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+          <span>Pastas de Filiais & Unidades</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-manage-units" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <p class="modal-intro-text" style="margin: 0;">Pastas cadastradas para organização do parque:</p>
+          <button type="button" class="deck-action-pill cta" id="btn-open-create-unit-inside-manage">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <span>+ Nova Pasta</span>
+          </button>
+        </div>
+
+        <div class="data-table-wrapper telemetry-table-wrapper" style="max-height: 320px; overflow-y: auto;">
+          <table class="data-table telemetry-data-table">
+            <thead>
+              <tr>
+                <th>Nome da Filial / Pasta</th>
+                <th style="text-align: center;">Impressoras</th>
+                <th style="text-align: center; width: 140px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="manage-units-list-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="deck-action-pill" id="btn-close-modal-manage-units-btn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVA PASTA -->
+  <div class="modal-backdrop" id="modal-unit-form" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+          <span id="modal-unit-form-title-text">Nova Pasta de Unidade</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-unit" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="unit-form">
+        <input type="hidden" id="unit-form-id" value="">
+        <div class="modal-body">
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="unit-name">
+              <span>Nome da unidade / pasta</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <input type="text" class="form-input cyber-input" id="unit-name" placeholder="Ex: Unidade Exemplo" required>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="unit-region">
+              <span>Estado / Região</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <select class="form-select cyber-select" id="unit-region" required>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+              <option value="SP">São Paulo (SP)</option>
+            </select>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="unit-description">Descrição (opcional)</label>
+            <input type="text" class="form-input cyber-input" id="unit-description" placeholder="Ex: Filial Zona Sul - Andares 1 e 2">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-unit">Cancelar</button>
+          <button type="submit" class="btn btn-primary cyber-button primary" id="btn-submit-unit-form">Salvar filial</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR PLANILHA DE IMPRESSORAS (EXCEL / CSV) -->
+  <div class="modal-backdrop" id="modal-import-sheet" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <span>Importação de Planilha</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-sheet" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Parâmetros Padrão de Importação -->
+        <div class="import-defaults-grid" style="grid-template-columns: 2fr 1fr; gap: 1rem;">
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="sheet-default-unit">
+              <span>Unidade / Pasta de destino padrão</span>
+            </label>
+            <div class="unit-select-row">
+              <select class="form-select cyber-select" id="sheet-default-unit" style="flex: 1;">
+                <option value="">Detectar pela coluna da planilha</option>
+              </select>
+              <button type="button" class="deck-action-pill highlight" id="btn-sheet-quick-new-unit" title="Criar nova pasta / unidade de destino" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 0.85rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                <span>Nova Pasta</span>
+              </button>
+            </div>
+            <div class="form-hint cyber-hint">Selecione uma pasta existente ou deixe para detectar pela planilha.</div>
+          </div>
+
+          <div class="form-group cyber-field">
+            <label class="form-label cyber-label" for="sheet-default-region">
+              <span>Estado / Região padrão</span>
+            </label>
+            <select class="form-select cyber-select" id="sheet-default-region">
+              <option value="">Auto (da planilha / unidade)</option>
+              <option value="SP">São Paulo (SP)</option>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+            </select>
+            <div class="form-hint cyber-hint">Aplica caso a planilha não traga a coluna de UF/Estado.</div>
+          </div>
+        </div>
+
+        <!-- Abas de Entrada: Arquivo vs Colar -->
+        <div class="sheet-entry-tabs">
+          <button type="button" class="sheet-tab-btn active" id="tab-sheet-file">Arquivo Excel ou CSV</button>
+          <button type="button" class="sheet-tab-btn" id="tab-sheet-paste">Colar células copiadas</button>
+        </div>
+
+        <!-- Área 1: Drag & Drop Arquivo -->
+        <div id="panel-sheet-file" class="sheet-entry-panel active">
+          <div class="sheet-dropzone" id="sheet-dropzone">
+            <input type="file" id="sheet-file-input" accept=".xlsx,.xls,.csv" style="display: none;">
+            <svg class="dropzone-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <div class="dropzone-title" id="dropzone-title">Arraste o arquivo aqui ou selecione no computador</div>
+            <div class="dropzone-subtitle">Formatos aceitos: Microsoft Excel (.xlsx, .xls) e texto delimitado (.csv)</div>
+            <button type="button" class="btn btn-secondary cyber-button secondary" id="btn-browse-sheet">Selecionar arquivo</button>
+          </div>
+        </div>
+
+        <!-- Área 2: Colar Texto -->
+        <div id="panel-sheet-paste" class="sheet-entry-panel" style="display: none;">
+          <textarea class="sheet-paste-area" id="sheet-paste-input" placeholder="Cole aqui as células copiadas do Excel (com cabeçalho)...&#10;Exemplo:&#10;Setor &#9; Modelo &#9; Serial &#9; IP &#9; Filial&#10;Recepção &#9; M1180 &#9; DEMO-0001 &#9; 198.18.0.48 &#9; 121 - Unidade B"></textarea>
+          <div class="sheet-paste-actions">
+            <button type="button" class="btn btn-secondary cyber-button secondary" id="btn-parse-pasted">Processar dados colados</button>
+          </div>
+        </div>
+
+        <!-- Área de Prévia e Validação (Preview) -->
+        <div id="sheet-preview-container" class="sheet-preview-box" style="display: none;">
+          <div class="preview-header">
+            <div class="preview-title-wrap">
+              <h4>Conferência antes da gravação</h4>
+              <span class="preview-filename" id="preview-filename-badge">arquivo.xlsx</span>
+            </div>
+            <div class="preview-counters">
+              <span class="preview-chip new"><strong id="preview-count-new">0</strong> novos</span>
+              <span class="preview-chip update"><strong id="preview-count-update">0</strong> atualizações</span>
+              <span class="preview-chip total"><strong id="preview-count-total">0</strong> total</span>
+            </div>
+          </div>
+
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Endereço IP</th>
+                  <th>Identificação / Serial</th>
+                  <th>Modelo</th>
+                  <th>Setor</th>
+                  <th>Filial</th>
+                </tr>
+              </thead>
+              <tbody id="sheet-preview-body">
+                <!-- Linhas mapeadas via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="deck-action-pill" id="btn-cancel-modal-sheet">Cancelar</button>
+        <button type="button" class="btn btn-primary cyber-button primary" id="btn-confirm-import-sheet" disabled>
+          <span>Gravar no inventário</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTRAR RECARGA MANUAL -->
+  <div class="modal-backdrop" id="modal-manual-recharge" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width: 540px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--color-primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Registrar Troca de Suprimento</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-recharge" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-manual-recharge">
+        <input type="hidden" id="recharge-printer-id" value="">
+        <input type="hidden" id="recharge-printer-name" value="">
+        <input type="hidden" id="recharge-printer-ip" value="">
+        <input type="hidden" id="recharge-unit-name" value="">
+        <input type="hidden" id="recharge-location" value="">
+        <input type="hidden" id="recharge-page-count" value="">
+
+        <div class="modal-body">
+          <div class="recharge-printer-info-card" id="recharge-modal-printer-info"></div>
+
+          <div class="cyber-field" style="margin-top: 1rem;">
+            <label class="cyber-label" for="recharge-supply-select">
+              <span>Suprimento substituído</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <select id="recharge-supply-select" class="cyber-select" required>
+              <option value="">Carregando suprimentos...</option>
+            </select>
+          </div>
+
+          <div class="cyber-field">
+            <label class="cyber-label">
+              <span>Tipo de insumo</span>
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="recharge-type-grid">
+              <label class="recharge-type-card active" id="opt-recharge-full-card">
+                <input type="radio" name="recharge-is-full" id="opt-recharge-full-input" value="true" checked style="display: none;">
+                <div class="recharge-card-badge">Novo (100%)</div>
+                <strong>Suprimento novo lacrado</strong>
+                <small>Bolsa ou toner lacrado de fábrica (≥ 95%)</small>
+              </label>
+
+              <label class="recharge-type-card" id="opt-recharge-partial-card">
+                <input type="radio" name="recharge-is-full" id="opt-recharge-partial-input" value="false" style="display: none;">
+                <div class="recharge-card-badge partial">Parcial</div>
+                <strong>Suprimento reaproveitado</strong>
+                <small>Item com uso anterior ou aproveitado de outro equipamento</small>
+              </label>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="cyber-field">
+              <label class="cyber-label" for="recharge-new-level">
+                <span>Nível instalado (%)</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <input type="number" id="recharge-new-level" class="cyber-input" min="1" max="100" value="100" required>
+            </div>
+
+            <div class="cyber-field">
+              <label class="cyber-label" for="recharge-custom-date">
+                <span>Data e hora da troca</span>
+                <span class="required-indicator">*</span>
+              </label>
+              <input type="datetime-local" id="recharge-custom-date" class="cyber-input" required>
+            </div>
+          </div>
+
+          <!-- Campo Unificado: Marco / Contador de Páginas -->
+          <div class="cyber-field" style="background: var(--bg-surface-light); border: 1px solid var(--border-subtle); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; gap: 0.25rem;">
+              <label class="cyber-label" for="recharge-page-count-input" style="margin-bottom: 0;">
+                <span>Contador de páginas da troca</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: var(--color-primary); cursor: pointer;">
+                <input type="checkbox" id="recharge-update-baseline" checked>
+                <span>Atualizar contador base do equipamento</span>
+              </label>
+            </div>
+            <input type="number" id="recharge-page-count-input" class="cyber-input" min="0" placeholder="Ex: 1647" style="font-family: var(--font-mono);">
+            <small style="color: var(--text-muted); font-size: 0.68rem; display: block; margin-top: 4px;">
+              Contador no momento da troca de suprimento.
+            </small>
+          </div>
+
+          <div class="cyber-field">
+            <label class="cyber-label" for="recharge-technician">Técnico responsável</label>
+            <input type="text" id="recharge-technician" class="cyber-input" placeholder="Ex: Plantonista TI / Técnico Campo">
+          </div>
+
+          <div class="cyber-field">
+            <label class="cyber-label" for="recharge-notes">Observações técnicas</label>
+            <textarea id="recharge-notes" class="cyber-input" rows="2" placeholder="Ex: Troca preventiva de rotina"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-recharge">Cancelar</button>
+          <button type="submit" class="cyber-button primary" id="btn-submit-manual-recharge">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Salvar Registro</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR DATA DE INSTALAÇÃO FÍSICA -->
+  <div class="modal-backdrop" id="modal-edit-installed-at" role="dialog" aria-modal="true" style="z-index: 2200;">
+    <div class="modal-dialog" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--color-primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Data de Instalação na Filial</span>
+        </h2>
+        <button class="btn-close-modal" id="btn-close-modal-installed" aria-label="Fechar modal">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-edit-installed-at">
+        <input type="hidden" id="edit-installed-printer-id" value="">
+        <div class="modal-body">
+          <div class="recharge-printer-info-card" id="installed-modal-printer-info" style="margin-bottom: 1rem;"></div>
+
+          <div class="cyber-field">
+            <label class="cyber-label" for="edit-installed-date-input">
+              <span>Data de instalação</span>
+            </label>
+            <input type="date" id="edit-installed-date-input" class="cyber-input" style="font-family: var(--font-mono);">
+            <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 4px;">
+              Data oficial de entrega e posicionamento físico do equipamento na unidade. Deixe em branco para remover.
+            </small>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="deck-action-pill" id="btn-cancel-modal-installed">Cancelar</button>
+          <button type="submit" class="cyber-button primary" id="btn-save-modal-installed">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Salvar Data</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       PAINEL LATERAL: DETALHES DA IMPRESSORA
+       ==================================================================== -->
+  <div class="drawer-backdrop" id="drawer-printer-detail" role="dialog" aria-modal="true">
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <div class="drawer-header-left">
+          <div class="drawer-header-icon">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+          </div>
+          <div>
+            <h2 class="drawer-title" id="detail-printer-name">Detalhes da Impressora</h2>
+            <p class="drawer-subtitle">Ficha técnica e status dos suprimentos</p>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btn-close-drawer-detail" aria-label="Fechar painel">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="drawer-body" id="detail-modal-body">
+        <!-- Telemetria rica injetada dinamicamente via JS -->
+      </div>
+
+      <div class="drawer-footer">
+        <div class="drawer-footer-actions-left">
+          <button type="button" class="deck-action-pill admin-only" id="btn-detail-edit" style="display: none;" title="Editar dados cadastrais">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+            <span>Editar</span>
+          </button>
+          <button type="button" class="deck-action-pill admin-only" id="btn-detail-replace" style="display:none"><span>Substituir equipamento</span></button>
+          <button type="button" class="deck-action-pill" id="btn-detail-asset-history"><span>Histórico do ativo</span></button>
+          <button type="button" class="deck-action-pill danger admin-only" id="btn-detail-delete" style="display: none;" title="Excluir impressora">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            <span>Excluir</span>
+          </button>
+        </div>
+
+        <div class="drawer-footer-actions-right">
+          <button type="button" class="deck-action-pill" id="btn-detail-refresh" title="Atualizar dados do equipamento">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            <span>Atualizar</span>
+          </button>
+          <button type="button" class="cyber-button primary" id="btn-detail-close">Fechar Painel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO FLUTUANTE DE ROLAGEM AO TOPO -->
+  <button class="scroll-top-btn" id="btn-scroll-top" title="Voltar ao topo da página" aria-label="Voltar ao topo">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- Parser Offline de Planilhas Excel e CSV (SheetJS) -->
+  <script src="js/xlsx.full.min.js"></script>
+
+  <!-- Script Principal da Aplicação -->
+  <script src="js/release-notes.js?v=1.0.0"></script>
+  <script src="js/dashboard-refresh.js?v=1.0.0"></script>
+  <script src="js/supply-semantics.js?v=1.0.0"></script>
+  <script src="js/device-alerts-ui.js?v=1.0.0"></script>
+  <script src="js/printer-diagnostic-ui.js?v=1.0.0"></script>
+  <script src="js/app.js?v=1.0.0"></script>
+  <script src="js/printer-replacement.js?v=1.1-save-confirmation"></script>
+  <script src="js/printing-costs.js?v=1.3"></script>
+  <script src="js/workstations.js?v=1.0.0"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "name": "hefesto",
+  "version": "1.0.0",
+  "hefestoRelease": {
+    "date": "2026-10-08",
+    "summary": "Primeira edição pública do Hefesto",
+    "changes": [
+      "Monitoramento de impressoras, suprimentos, contadores, alertas e histórico técnico.",
+      "Hermes: código do coletor Windows para impressoras USB.",
+      "Instalações começam sem inventário, redes ou preços predefinidos."
+    ]
+  },
+  "description": "Monitoramento de impressoras SNMP, suprimentos e coleta USB com Hermes",
+  "type": "module",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node --no-warnings server/server.js",
+    "dev": "node --watch --no-warnings server/server.js",
+    "check-syntax": "node scripts/check-syntax.mjs",
+    "test": "node --test server/tests/*.test.js",
+    "ci": "npm run check-public && npm run check-syntax && npm test",
+    "check-public": "node scripts/check-public-content.mjs"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "keywords": [
+    "snmp",
+    "printer-monitor",
+    "telemetry",
+    "enterprise",
+    "hefesto"
+  ],
+  "author": "Matheus Izaias (SaruAkaza)",
+  "license": "MIT"
+}

@@ -1,0 +1,28 @@
+<service>
+  <id>HefestoPrintMonitor</id>
+  <name>HefestoPrintMonitor</name>
+  <description>Serviço corporativo do Hefesto - Monitor de Impressoras e Telemetria em tempo real.</description>
+
+  <executable>node.exe</executable>
+  <arguments>server.js</arguments>
+  <workingdirectory>%BASE%\..\server</workingdirectory>
+
+  <env name="PORT" value="80" />
+  <env name="NODE_ENV" value="production" />
+
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="15 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <priority>Normal</priority>
+  <stoptimeout>15 sec</stoptimeout>
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>false</delayedAutoStart>
+</service>

@@ -1,0 +1,18 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
+const run=promisify(execFile),root=fileURLToPath(new URL('../',import.meta.url));
+if(process.platform!=='win32')throw new Error('Compile o instalador no Windows com .NET Framework 4.x.');
+const compiler=path.join(process.env.WINDIR||'C:\\Windows','Microsoft.NET','Framework64','v4.0.30319','csc.exe');
+const output=path.join(root,'deployment','collector');await fs.mkdir(output,{recursive:true});
+const executable=path.join(output,'HefestoColetor-Setup.exe');
+const references=['System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.ServiceProcess.dll','System.Management.dll','System.Web.Extensions.dll','System.Security.dll','System.Xml.dll'];
+await run(compiler,['/nologo','/target:winexe','/platform:anycpu','/optimize+','/out:'+executable,...references.map(r=>'/reference:'+r),path.join(root,'collector/windows/HefestoCollector.cs')],{timeout:60000});
+const testResult=path.join(output,'self-test.json');await run(executable,['--self-test',testResult],{timeout:30000});
+const result=JSON.parse(await fs.readFile(testResult,'utf8'));if(!result.success)throw new Error('Autoteste do instalador falhou.');
+const bytes=await fs.readFile(executable),sha256=crypto.createHash('sha256').update(bytes).digest('hex');
+await fs.writeFile(path.join(output,'SHA256SUMS.txt'),sha256+'  HefestoColetor-Setup.exe\r\n');
+console.log(JSON.stringify({success:true,executable,bytes:bytes.length,sha256,selfTest:result}));

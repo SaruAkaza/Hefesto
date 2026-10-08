@@ -1,0 +1,38 @@
+name: Hefesto CI
+
+on:
+  push:
+    branches: [ "main", "master", "feat/*", "fix/*" ]
+  pull_request:
+    branches: [ "main", "master", "feat/*" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ "22.13.0", "22.x", "24.x" ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: 'server/package-lock.json'
+
+      - name: Install server dependencies
+        run: npm ci --prefix server
+
+      - name: Check JavaScript syntax
+        run: npm run check-syntax
+
+      - name: Check public source boundaries
+        run: npm run check-public
+
+      - name: Run Hermetic Automated Tests
+        run: npm test

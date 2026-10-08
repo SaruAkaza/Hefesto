@@ -1,0 +1,14 @@
+.workstation-dialog{width:min(1200px,95vw);max-height:92vh;overflow:auto;background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-card);border-radius:var(--radius-lg);padding:1.2rem}
+.workstation-dialog::backdrop{background:rgba(0,0,0,.65)}
+.workstation-dialog header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem}
+.workstation-dialog h2{font-size:1.3rem}.workstation-dialog h3{font-size:1rem;margin:1.2rem 0 .5rem}
+.workstation-dialog p{margin:.7rem 0;line-height:1.5}.workstation-dialog header p,.ws-note{font-size:.82rem;color:var(--text-secondary)}
+.ws-controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:end;margin:.85rem 0}
+.ws-controls label{display:flex;flex-direction:column;gap:.35rem;font-size:.85rem}
+.ws-controls input,.ws-controls select{padding:.55rem;border:1px solid var(--border-card);border-radius:6px;background:var(--bg-surface);color:var(--text-primary);max-width:260px}
+.ws-table{overflow:auto}.workstation-dialog table{width:100%;border-collapse:collapse;font-size:.85rem}
+.workstation-dialog th,.workstation-dialog td{padding:.7rem;text-align:left;border-bottom:1px solid var(--border-card);vertical-align:top}
+.workstation-dialog summary{cursor:pointer;font-weight:600}.ws-code{user-select:all;overflow-wrap:anywhere;font-size:1rem}
+#ws-totals{font-weight:600;margin:1rem 0}.workstation-dialog small{color:var(--text-secondary)}
+.usb-connection-badge{display:inline-block;padding:.12rem .4rem;border:1px solid var(--color-primary);border-radius:5px;color:var(--color-primary-text);font-size:.7rem;font-weight:700;vertical-align:middle}
+.usb-detail p{line-height:1.5;margin:.8rem 0}.usb-detail table{width:100%;border-collapse:collapse;font-size:.85rem}.usb-detail td,.usb-detail th{padding:.6rem;text-align:left;border-bottom:1px solid var(--border-card)}

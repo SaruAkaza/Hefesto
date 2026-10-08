@@ -1,0 +1,21 @@
+/* Substituição de equipamento: diálogo nativo <dialog>, usa os tokens de style.css */
+.asset-dialog { width: min(900px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; padding: 1.5rem; border: 1px solid var(--border-card); border-radius: var(--radius-xl); background: var(--bg-surface); color: var(--text-primary); }
+.asset-dialog::backdrop { background: var(--backdrop); }
+.asset-dialog header, .asset-dialog footer { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 18px; }
+.asset-dialog footer { margin: 20px 0 0; flex-wrap: wrap; }
+.asset-dialog h2 { font-size: 1.15rem; }
+.asset-dialog h3 { margin: 18px 0 10px; font-size: 1rem; }
+.asset-dialog p { margin: 8px 0; line-height: 1.5; }
+.asset-dialog .asset-context { border-left: 3px solid var(--color-primary); padding: 12px; background: var(--bg-surface-elevated); margin-bottom: 18px; }
+.asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.asset-grid label { display: grid; gap: 6px; font-size: .85rem; }
+.asset-grid .asset-wide { grid-column: 1 / -1; }
+.asset-dialog input:not([type=checkbox]), .asset-dialog select, .asset-dialog textarea { width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--border-medium); border-radius: var(--radius-md); background: var(--bg-input); color: inherit; font: inherit; }
+.asset-dialog .asset-confirm { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; line-height: 1.5; }
+.asset-dialog .asset-message { min-height: 1.5em; padding: 10px 0; color: var(--text-secondary); }
+.asset-dialog .asset-error { color: var(--color-danger); }
+.asset-dialog .asset-table-wrap { overflow-x: auto; }
+.asset-dialog table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.asset-dialog td, .asset-dialog th { padding: 9px; text-align: left; border-bottom: 1px solid var(--border-card); }
+.asset-dialog .asset-event { padding: 12px 0; border-bottom: 1px solid var(--border-card); }
+@media (max-width: 600px) { .asset-grid { grid-template-columns: 1fr; } .asset-dialog { padding: 16px; } }
