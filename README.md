@@ -4,6 +4,14 @@ Monitoramento de impressoras de rede via SNMP e coleta de impressoras USB com He
 
 O Hefesto reúne inventário, conectividade, suprimentos, contadores, alertas, histórico técnico e estimativas de custos em um painel web. A instalação começa com banco vazio: unidades, equipamentos, redes e preços são configurados localmente.
 
+## Apresentação em vídeo
+
+[![Assistir à apresentação pública do Hefesto, narrada por Matheus Izaias](docs/media/hefesto-apresentacao-capa.png)](docs/media/Hefesto-apresentacao-publica-voz-Matheus.mp4)
+
+**[▶ Assistir à apresentação completa (2 min)](docs/media/Hefesto-apresentacao-publica-voz-Matheus.mp4)**
+
+Demonstração da edição pública com dados fictícios e narração de Matheus Izaias. Clique na capa ou no link acima para abrir o vídeo.
+
 ## Recursos
 
 - Impressoras de rede: descoberta por IP, número de série ou MAC, importação de planilhas e consulta SNMP.
