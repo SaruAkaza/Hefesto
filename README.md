@@ -6,9 +6,9 @@ O Hefesto reúne inventário, conectividade, suprimentos, contadores, alertas, h
 
 ## Apresentação em vídeo
 
-[![Assistir à apresentação pública do Hefesto, narrada por Matheus Izaias](docs/media/hefesto-apresentacao-capa.png)](docs/media/Hefesto-apresentacao-publica-voz-Matheus.mp4)
+[![Assistir à apresentação pública do Hefesto, narrada por Matheus Izaias](docs/media/hefesto-apresentacao-capa.png)](https://saruakaza.github.io/Hefesto/media/)
 
-**[▶ Assistir à apresentação completa (2 min)](docs/media/Hefesto-apresentacao-publica-voz-Matheus.mp4)**
+**[▶ Assistir à apresentação completa (2 min)](https://saruakaza.github.io/Hefesto/media/)** · [Baixar o MP4](https://github.com/SaruAkaza/Hefesto/raw/refs/heads/main/docs/media/Hefesto-apresentacao-publica-voz-Matheus.mp4)
 
 Demonstração da edição pública com dados fictícios e narração de Matheus Izaias. Clique na capa ou no link acima para abrir o vídeo.
 
